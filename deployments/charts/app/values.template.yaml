@@ -1,0 +1,3 @@
+repository: <your docker repo>
+hostname: <your hostname>
+certificate: <digital ocean certificate id>

@@ -1,0 +1,5 @@
+version: "3"
+services:
+  # User
+  user:
+    image: $REPOSITORY/app-user:$TAG

@@ -1,0 +1,27 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: user
+  namespace: users
+spec:
+  replicas: 1
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        name: user
+    spec:
+      tolerations:
+        - key: dedicated
+          value: user
+          effect: NoExecute
+      containers:
+        - env:
+            - name: CLIENT_URL
+              value: {{ .Values.client_url }}}
+          image: lynchrj/app-user
+          imagePullPolicy: IfNotPresent
+          name: user
+          resources: {}
+      restartPolicy: Always
+status: {}

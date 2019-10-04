@@ -1,0 +1,6 @@
+name: awayteam-user
+namespace: users
+description: AwayTeam application deployment
+version: 0.0.1
+sources:
+home:

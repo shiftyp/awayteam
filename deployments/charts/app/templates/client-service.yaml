@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: awayteam
+  labels:
+    service: client
+  name: client
+spec:
+  ports:
+    - name: "http"
+      port: 80
+      targetPort: 80
+  selector:
+    service: client
+status:
+  loadBalancer: {}

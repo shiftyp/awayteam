@@ -1,0 +1,13 @@
+version: "3"
+services:
+  storybook:
+    build:
+      context: ../../containers
+      dockerfile: client/storybook.Dockerfile
+    volumes:
+      - ../../containers/client:/app
+      - /app/node_modules
+    working_dir: /app
+    command: ./storybook.command.sh
+    ports:
+      - 6006:6006

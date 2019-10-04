@@ -1,0 +1,33 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: ingress-awayteam
+  namespace: awayteam
+  annotations:
+    # Stuff specific to install on digital ocean with certificates
+    kubernetes.io/ingress.class: nginx
+    service.beta.kubernetes.io/do-loadbalancer-protocol: "https"
+    service.beta.kubernetes.io/do-loadbalancer-redirect-http-to-https: "true"
+    service.beta.kubernetes.io/do-loadbalancer-certificate-id: {{ .Values.certificate }}
+    service.beta.kubernetes.io/do-loadbalancer-hostname: {{ .Values.hostname }}
+spec:
+  rules:
+  - host: {{ .Values.hostname }}}
+    http:
+      paths:
+      - path: /socket
+        backend:
+          serviceName: chat
+          servicePort: 4000
+      - path: /session
+        backend:
+          serviceName: feature
+          servicePort: 3000
+      - path: /api/v1/spans
+        backend:
+          serviceName: honeycomb
+          servicePort: 9411
+      - path: /
+        backend:
+          serviceName: client
+          servicePort: 80

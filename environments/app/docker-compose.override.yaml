@@ -1,0 +1,17 @@
+version: "3"
+services:
+  # Unleash feature flag server
+  unleash:
+    ports:
+      - "4242:4242"
+
+  # Development client application
+  client:
+    build:
+      args:
+        stage: dev
+    ports:
+      - "8000:80"
+    depends_on:
+      - honeycomb
+      - chat

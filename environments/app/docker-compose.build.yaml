@@ -1,0 +1,19 @@
+version: "3"
+services:
+  # Unleash Feature Flag Service
+  unleash:
+    image: $REPOSITORY/app-unleash:$TAG
+
+  # Client application
+  client:
+    environment:
+      - MIX_ENV=dev
+    image: $REPOSITORY/app-client:$TAG
+
+  # Feature client service
+  feature:
+    image: $REPOSITORY/app-feature:$TAG
+
+  # Chat application
+  chat:
+    image: $REPOSITORY/app-chat:$TAG

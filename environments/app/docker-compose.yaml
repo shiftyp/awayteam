@@ -1,0 +1,75 @@
+version: "3"
+services:
+  # Postgres
+  postgres:
+    restart: always
+    image: postgres
+    ports:
+      - "5432"
+
+  # Unleash Feature Flag Service
+  unleash:
+    restart: always
+    build:
+      context: ../../containers
+      dockerfile: unleash/Dockerfile
+    ports:
+      - "4242"
+    environment:
+      - DATABASE_URL=postgres://postgres:unleash@postgres/postgres
+    depends_on:
+      - postgres
+    command: /waitfor.sh postgres:5432 -- npm start
+
+  # Feature Flag Client Service
+  feature:
+    restart: always
+    build:
+      context: ../../containers
+      dockerfile: feature/Dockerfile
+    ports:
+      - "3000"
+    environment:
+      - UNLEASH_URL=http://unleash:4242/api
+    depends_on:
+      - unleash
+    command: /waitfor.sh unleash:4242 -- npm start
+
+  # Chat Redis
+  redis:
+    restart: always
+    image: redis
+    ports:
+      - "6379"
+
+  # Client application
+  client:
+    restart: always
+    build:
+      context: ../../containers
+      dockerfile: client/Dockerfile
+    ports:
+      - "80"
+
+  # Chat application
+  chat:
+    restart: always
+    build:
+      context: ../../containers
+      dockerfile: chat/Dockerfile
+    ports:
+      - "4000"
+    environment:
+      - REDIS_URL=redis://redis
+      - UNLEASH_URL=http://unleash:4242/api
+      - PGDATABASE=chat_dev
+    command: /waitfor.sh postgres:5432 -- ./start.sh
+    depends_on:
+      - redis
+      - postgres
+
+  # Honeycomb Tracing Service
+  honeycomb:
+    restart: always
+    image: honeycombio/honeycomb-opentracing-proxy
+    command: honeycomb-opentracing-proxy -d $HONEYCOMB_DATASET_NAME -k $HONEYCOMB_WRITE_KEY

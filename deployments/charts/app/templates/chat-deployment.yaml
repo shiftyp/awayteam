@@ -1,0 +1,40 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  namespace: awayteam
+  labels:
+    service: chat
+  name: chat
+spec:
+  replicas: 1
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        service: chat
+    spec:
+      containers:
+        - env:
+            - name: PORT
+              value: "4000"
+            - name: MIX_ENV
+              value: dev
+            - name: REDIS_URL
+              value: redis://redis
+            - name: UNLEASH_URL
+              value: http://unleash:4242/api
+            - name: PGDATABASE
+              value: chat_dev
+          image: {{ .Values.repository }}/app-chat
+          
+          name: chat
+          ports:
+            - containerPort: 80
+          resources: {}
+          args:
+            - /waitfor.sh
+            - postgres:5432
+            - --
+            - ./start.sh
+      restartPolicy: Always
+status: {}

@@ -1,0 +1,46 @@
+---
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: honeycomb
+  namespace: awayteam
+spec:
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: honeycomb
+    spec:
+      containers:
+      - name: honeycomb
+        image: honeycombio/honeycomb-opentracing-proxy
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 9411
+        args:
+          - -d
+          - awayteam
+          - -k
+          - "$(HONEYCOMB_WRITEKEY)"
+          - --debug
+        env:
+        - name: HONEYCOMB_WRITEKEY
+          valueFrom:
+            secretKeyRef:
+              key: key
+              name: honeycomb-write-key
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: honeycomb
+  labels:
+    app: honeycomb
+  namespace: awayteam
+spec:
+  ports:
+  - name: honeycomb
+    port: 9411
+    targetPort: 9411
+  selector:
+    app: honeycomb

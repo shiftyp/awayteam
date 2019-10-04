@@ -1,0 +1,33 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  namespace: awayteam
+  labels:
+    service: unleash
+    dedicated: main
+  name: unleash
+spec:
+  replicas: 1
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        service: unleash
+    spec:
+      containers:
+        - env:
+            - name: DATABASE_URL
+              value: postgres://postgres:unleash@postgres/postgres
+          image: {{ .Values.repository }}/app-unleash
+          name: unleash
+          ports:
+            - containerPort: 4242
+          resources: {}
+          args:
+            - /waitfor.sh
+            - postgres:5432
+            - --
+            - npm
+            - start
+      restartPolicy: Always
+status: {}

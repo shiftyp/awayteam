@@ -1,0 +1,32 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  namespace: awayteam
+  labels:
+    service: feature
+  name: feature
+spec:
+  replicas: 1
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        service: feature
+    spec:
+      containers:
+        - env:
+            - name: UNLEASH_URL
+              value: http://unleash:4242/api
+          image: {{ .Values.repository }}/app-feature
+          name: feature
+          ports:
+            - containerPort: 3000
+          resources: {}
+          args:
+            - /waitfor.sh
+            - unleash:4242
+            - --
+            - npm
+            - start
+      restartPolicy: Always
+status: {}

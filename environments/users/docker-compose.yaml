@@ -1,0 +1,10 @@
+version: "3"
+services:
+  user:
+    network_mode: host
+    restart: always
+    build:
+      context: ../../containers
+      dockerfile: user/Dockerfile
+    environment:
+      - CLIENT_URL=$CLIENT_URL
