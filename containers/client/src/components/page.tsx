@@ -1,6 +1,6 @@
 import React from 'react'
 import ReactDOM from 'react-dom'
-import { ChatProvider } from '../contexts/chat'
+import { ChatRenderer } from '../contexts/chat'
 import { randomUserId, trace } from '../tracing/utils'
 import { traceComponent, traceMetadata } from '../tracing'
 import { UserInput } from '../components/user_input'
@@ -37,10 +37,14 @@ const ChatPage = traceComponent(() => {
         {user === '' ? (
           <UserInput setUser={setUser} />
         ) : (
-          <ChatProvider id={id} user={user}>
-            <ChatInput />
-            <ChatLog />
-          </ChatProvider>
+          <ChatRenderer id={id} user={user}>
+            {({ messages, sendMessage }) => (
+              <>
+                <ChatInput sendMessage={sendMessage} />
+                <ChatLog messages={messages} />
+              </>
+            )}
+          </ChatRenderer>
         )}
       </FeaturesProvider>
     </Container>

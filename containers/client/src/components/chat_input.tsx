@@ -1,30 +1,24 @@
 import * as React from 'react'
 
-import { traceComponent, traceMetadata, trace } from '../tracing'
-import { useFeatures } from '../contexts/features'
-import { useChat } from '../contexts/chat'
+import { traceComponent, traceInteractions } from '../tracing'
 import { ButtonInput } from './button_input'
+import { ChatMessage } from '../types'
 
-export const ChatInput = traceComponent(() => {
-  const { sendMessage } = useChat()
-  const features = useFeatures()
+export type ChatInputProps = {
+  sendMessage: (message: ChatMessage) => void
+}
 
-  traceMetadata({
-    features,
-  })
+export const ChatInput: React.FunctionComponent<
+  ChatInputProps
+> = traceComponent(({ sendMessage }) => {
+  const interaction = traceInteractions()
 
   return (
     <ButtonInput
       name="message"
-      onClick={text => {
-        trace(
-          'event:chat_input:onclick',
-          () => {
-            sendMessage({ text })
-          },
-          { features }
-        )
-      }}
+      onClick={interaction('event:chat_input:onclick', (text: string) => {
+        sendMessage({ text })
+      })}
     >
       Send Message
     </ButtonInput>

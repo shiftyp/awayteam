@@ -1,2 +1,7 @@
-export { trace, wrap } from './utils'
-export { createElement, traceComponent, traceMetadata } from './jsx'
+export { wrap } from './utils'
+export {
+  createElement,
+  traceComponent,
+  traceMetadata,
+  traceInteractions,
+} from './jsx'

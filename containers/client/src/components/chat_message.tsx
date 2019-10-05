@@ -3,7 +3,6 @@ import * as React from 'react'
 import {
   Paper,
   Avatar,
-  List,
   ListItem,
   ListItemText,
   ListItemAvatar,
@@ -30,7 +29,6 @@ export const ChatMessage = traceComponent(({ message }: ChatMessageProps) => {
   const features = useFeatures()
 
   traceMetadata({
-    features,
     messageLength: message.body.text.length,
   })
 

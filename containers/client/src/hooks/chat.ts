@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { Socket, Presence, Channel } from 'phoenix'
 import { ChatMessage, ChatFeatures } from '../types'
-import { trace } from '../tracing'
+import { traceInteractions } from '../tracing'
 
 const createMessageStats = messages => ({
   count: messages.length,
@@ -70,6 +70,8 @@ export const useChatMessages = (
     channel: Channel
   }>()
 
+  const interaction = traceInteractions()
+
   React.useEffect(() => {
     const socket = new Socket('/socket', { params: { user: user, id: id } })
 
@@ -77,47 +79,32 @@ export const useChatMessages = (
 
     const channel = socket.channel('awayteam:default')
 
-    channel.on('presence_state', state => {
-      trace(
-        'websocket:presence_state',
-        () => {
-          updatePresences({
-            type: 'presence_state',
-            payload: state,
-          })
-        },
-        {
-          features,
-        }
-      )
-    })
+    channel.on(
+      'presence_state',
+      interaction('websocket:presence_state', state => {
+        updatePresences({
+          type: 'presence_state',
+          payload: state,
+        })
+      })
+    )
 
-    channel.on('presence_diff', diff => {
-      trace(
-        'websocket:presence_diff',
-        () => {
-          updatePresences({
-            type: 'presence_diff',
-            payload: diff,
-          })
-        },
-        {
-          features,
-        }
-      )
-    })
+    channel.on(
+      'presence_diff',
+      interaction('websocket:presence_diff', diff => {
+        updatePresences({
+          type: 'presence_diff',
+          payload: diff,
+        })
+      })
+    )
 
-    channel.on('message:new', message => {
-      trace(
-        'websocket:message:new',
-        () => {
-          addMessage(message)
-        },
-        {
-          features,
-        }
-      )
-    })
+    channel.on(
+      'message:new',
+      interaction('websocket:message:new', message => {
+        addMessage(message)
+      })
+    )
 
     channel
       .join()

@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { ChatFeatures } from '../types'
 import { getFeatures } from '../hooks/features'
-import { traceComponent } from '../tracing'
+import { traceComponent, traceMetadata } from '../tracing'
 
 export type FeaturesContext = {
   features: ChatFeatures
@@ -15,6 +15,10 @@ export const FeaturesProvider: React.FunctionComponent<{
   id: string
 }> = traceComponent(({ id, children }) => {
   const features = getFeatures(id)
+
+  traceMetadata({
+    features,
+  })
 
   return (
     <FeaturesContext.Provider value={{ features }}>

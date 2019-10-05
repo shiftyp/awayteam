@@ -4,6 +4,7 @@ import {
   randomTraceId,
   convertPerfTime,
   popTraceMetadata,
+  trace as rootTrace,
   isSSR,
   randomComponentId,
 } from './utils'
@@ -17,7 +18,6 @@ import {
 } from 'zipkin'
 import { HttpLogger } from 'zipkin-transport-http'
 import { SchedulerInteractions } from 'scheduler'
-import { string } from 'prop-types'
 
 const httpLogger = new HttpLogger({
   endpoint: `/api/v1/spans`,
@@ -32,7 +32,13 @@ const tracer = new Tracer({
 
 export type TracingContext = {
   start: (spanId: string, ...ids: string[]) => void
-  traceMetadata: (spanId: string, metadata: any) => void
+  traceMetadata: (spanId: string, metadata: any) => any
+  trace: <Ret>(
+    name: string,
+    cb: () => Ret,
+    metadata: any,
+    timestamp: number
+  ) => Ret
   record: (
     componentId: string,
     spanId: string,
@@ -192,6 +198,7 @@ const useTracing = () => {
     traceMetadata: (spanId: string, metadata: any) => {
       traceBuffer[spanId].metadata = metadata
     },
+    trace: rootTrace,
     record: (
       componentId: string,
       spanId: string,
@@ -250,26 +257,41 @@ const useTracing = () => {
   }
 }
 
-type MetadataHook = (metadata: any) => void
+const createConnectedHook = <Args extends any[], Ret extends any>() => {
+  type Hook = (...args: Args) => Ret
 
-const [connectMetadataHook, internalHook] = (() => {
-  const errorHook = () => {
+  const errorHook = (...args: Args) => {
     if (!isSSR) {
-      console.error('tracingMetadata can only be added in a traceComponent')
+      throw Error('tracing hooks can only be used in a traceComponent')
     }
   }
-  let hook: (metadata: any) => void = errorHook
+  let hook: Hook = errorHook as Hook
 
   return [
-    (newHook: (metadata: any) => void) => {
+    (newHook: Hook) => {
       hook = newHook
-      return () => (hook = errorHook)
+      return () => (hook = errorHook as Hook)
     },
-    (metadata: any) => hook(metadata),
-  ] as [(newHook: MetadataHook) => () => void, MetadataHook]
-})()
+    (...args: Args) => hook(...args),
+  ] as [(newHook: Hook) => () => void, Hook]
+}
 
-export const traceMetadata = internalHook
+type CreateInteraction = <Args extends any[], Ret extends any>(
+  name: string,
+  cb: (...args: Args) => Ret
+) => (...args: Args) => Ret
+
+const [connectMetadataHook, internalMetadataHook] = createConnectedHook<
+  [any],
+  void
+>()
+const [connectInteractionHook, internalInteractionHook] = createConnectedHook<
+  [],
+  CreateInteraction
+>()
+
+export const traceMetadata = internalMetadataHook
+export const traceInteractions = internalInteractionHook
 
 export const traceComponent = <P extends {}>(
   Component: React.FunctionComponent<P>
@@ -281,20 +303,57 @@ export const traceComponent = <P extends {}>(
   const Wrapper: React.FunctionComponent<P> = (props, ...rest) => {
     const [componentId] = React.useState(randomComponentId())
     const spanId = randomSpanId()
-    const { start, traceMetadata, record } = useTracing()
+    const { start, traceMetadata, record, trace } = useTracing()
+    let storedMetadata = {}
 
     start(spanId)
 
-    const disconnect = connectMetadataHook((metadata: any) =>
-      traceMetadata(spanId, metadata)
+    const disconnectMetadataHook = connectMetadataHook((metadata: any) => {
+      storedMetadata = metadata
+    })
+
+    const disconnectInteractionHook = connectInteractionHook(
+      () => <Args extends any[], Ret extends any>(
+        name: string,
+        cb: (...args: Args) => Ret
+      ) => (...args: Args) =>
+        trace(name, () => cb(...args), storedMetadata, performance.now())
     )
 
     const childStart = (childId: string, ...ids: string[]) =>
       start(childId, ...ids, spanId)
 
+    const childTraceMetadata = (spanId: string, metadata: any) => {
+      traceMetadata(spanId, {
+        ...metadata,
+        ...storedMetadata,
+      })
+    }
+
+    const childTrace = (
+      name,
+      cb,
+      metadata = {},
+      timestamp = performance.now()
+    ) =>
+      trace(
+        name,
+        cb,
+        {
+          ...metadata,
+          ...storedMetadata,
+        },
+        timestamp
+      )
+
     const ret = (
       <TracingContext.Provider
-        value={{ start: childStart, traceMetadata, record }}
+        value={{
+          start: childStart,
+          trace: childTrace,
+          traceMetadata: childTraceMetadata,
+          record,
+        }}
       >
         <React.Profiler
           id={Wrapper.displayName}
@@ -323,7 +382,10 @@ export const traceComponent = <P extends {}>(
       </TracingContext.Provider>
     )
 
-    disconnect()
+    traceMetadata(spanId, storedMetadata)
+
+    disconnectMetadataHook()
+    disconnectInteractionHook()
 
     return ret
   }

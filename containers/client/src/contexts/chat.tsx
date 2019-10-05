@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { useChatMessages } from '../hooks/chat'
 import { traceMetadata, traceComponent } from '../tracing'
-import { ChatMessage, ChatFeatures, ChatResponse } from '../types'
+import { ChatMessage, ChatResponse } from '../types'
 import { useFeatures } from './features'
 
 export type ChatContext = {
@@ -19,11 +19,10 @@ export type ChatContext = {
 export type ChatProviderProps = {
   id: string
   user: string
+  children: (context: ChatContext) => JSX.Element
 }
 
-const ChatContext = React.createContext<ChatContext>(null)
-
-export const ChatProvider: React.FunctionComponent<
+export const ChatRenderer: React.FunctionComponent<
   ChatProviderProps
 > = traceComponent(({ children, id, user }) => {
   const features = useFeatures()
@@ -40,13 +39,7 @@ export const ChatProvider: React.FunctionComponent<
     onlineStats,
   })
 
-  return (
-    <ChatContext.Provider value={{ id, user, messages, online, sendMessage }}>
-      {children}
-    </ChatContext.Provider>
-  )
+  return children({ id, user, messages, online, sendMessage })
 })
 
-export const useChat = () => React.useContext(ChatContext)
-
-ChatProvider.displayName = 'chat_provider'
+ChatRenderer.displayName = 'chat_provider'

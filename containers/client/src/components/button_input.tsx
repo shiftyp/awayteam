@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { trace, traceComponent, traceMetadata } from '../tracing'
+import { traceInteractions, traceComponent } from '../tracing'
 import { useFeatures } from '../contexts/features'
 import { Toolbar, TextField, Button } from '@material-ui/core'
 
@@ -16,36 +16,25 @@ export const ButtonInput: React.FunctionComponent<
     const [value, updateValue] = React.useState<string>('')
     const features = useFeatures()
 
-    traceMetadata({
-      features,
-    })
+    const interaction = traceInteractions()
 
     const inputName = `set-${name}`
     const buttonName = `submit-${name}`
 
-    const _onChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      trace(
-        'event:button_input:onchange',
-        () => {
-          const newValue = e.target.value
+    const _onChange = interaction(
+      'event:button_input:onchange',
+      (e: React.ChangeEvent<HTMLInputElement>) => {
+        const newValue = e.target.value
 
-          updateValue(newValue)
-          onChange(newValue)
-        },
-        { features }
-      )
-    }
+        updateValue(newValue)
+        onChange(newValue)
+      }
+    )
 
-    const _onClick = () => {
-      trace(
-        'event:button_input:onclick',
-        () => {
-          onClick(value)
-          updateValue('')
-        },
-        { features }
-      )
-    }
+    const _onClick = interaction('event:button_input:onclick', () => {
+      onClick(value)
+      updateValue('')
+    })
 
     if (features && features.useMaterialUI) {
       return (
