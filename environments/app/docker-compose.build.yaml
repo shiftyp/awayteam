@@ -14,6 +14,10 @@ services:
   feature:
     image: $REPOSITORY/app-feature:$TAG
 
+  # Recorder service
+  recorder:
+    image: $REPOSITORY/app-recorder:$TAG
+
   # Chat application
   chat:
     image: $REPOSITORY/app-chat:$TAG

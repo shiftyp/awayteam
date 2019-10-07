@@ -35,13 +35,6 @@ services:
       - unleash
     command: /waitfor.sh unleash:4242 -- npm start
 
-  # Chat Redis
-  redis:
-    restart: always
-    image: redis
-    ports:
-      - "6379"
-
   # Client application
   client:
     restart: always
@@ -65,11 +58,31 @@ services:
       - PGDATABASE=chat_dev
     command: /waitfor.sh postgres:5432 -- ./start.sh
     depends_on:
-      - redis
       - postgres
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana
+    ports:
+      - "3000"
+
+  elastic:
+    restart: always
+    image: docker.elastic.co/elasticsearch/elasticsearch
+    ports:
+      - "9200"
+      - "9300"
+
+  recorder:
+    restart: always
+    build:
+      context: ../../containers
+      dockerfile: recorder/Dockerfile
+    command: /waitfor.sh elastic:9200 -- recorder
+    ports:
+      - "9411"
 
   # Honeycomb Tracing Service
   honeycomb:
     restart: always
     image: honeycombio/honeycomb-opentracing-proxy
-    command: honeycomb-opentracing-proxy -d $HONEYCOMB_DATASET_NAME -k $HONEYCOMB_WRITE_KEY
+    command: honeycomb-opentracing-proxy -d $HONEYCOMB_DATASET_NAME -k $HONEYCOMB_WRITE_KEY --downstream telegraf:9411

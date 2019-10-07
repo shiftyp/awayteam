@@ -18,7 +18,7 @@ spec:
       containers:
         - env:
             - name: CLIENT_URL
-              value: {{ .Values.client_url }}}
+              value: {{ .Values.client_url }}
           image: lynchrj/app-user
           imagePullPolicy: IfNotPresent
           name: user

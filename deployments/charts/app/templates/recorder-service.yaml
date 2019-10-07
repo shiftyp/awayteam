@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: awayteam
+  labels:
+    service: recorder
+  name: recorder
+spec:
+  ports:
+    - name: "9411"
+      port: 9411
+      targetPort: 9411
+  selector:
+    service: recorder
+status:
+  loadBalancer: {}

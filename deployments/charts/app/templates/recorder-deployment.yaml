@@ -1,0 +1,31 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  namespace: awayteam
+  labels:
+    service: recorder
+  name: recorder
+spec:
+  replicas: 1
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        service: recorder
+    spec:
+      containers:
+        - env:
+            - name: ELASTICSEARCH_URL
+              value: http://elasticsearch:9200
+          image: {{ .Values.repository }}/app-recorder
+          name: recorder
+          ports:
+            - containerPort: 3000
+          resources: {}
+          args:
+            - /waitfor.sh
+            - elasticsearch:9200
+            - --
+            - recorder
+      restartPolicy: Always
+status: {}

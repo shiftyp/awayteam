@@ -5,7 +5,7 @@ metadata:
   name: honeycomb
   namespace: awayteam
 spec:
-  replicas: 2
+  replicas: 1
   template:
     metadata:
       labels:
@@ -23,6 +23,8 @@ spec:
           - -k
           - "$(HONEYCOMB_WRITEKEY)"
           - --debug
+          - --downstream
+          - http://recorder:9411
         env:
         - name: HONEYCOMB_WRITEKEY
           valueFrom:
