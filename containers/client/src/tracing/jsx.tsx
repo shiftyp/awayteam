@@ -85,7 +85,7 @@ const makeSpan = (
   tracer.recordServiceName(
     isSSR
       ? 'ssr'
-      : `${window.location.origin}${window.location.pathname}?${window.location.search}#${window.location.hash}`
+      : `${window.location.origin}${window.location.pathname}${window.location.search}${window.location.hash}`
   )
   tracer.recordAnnotation(
     new Annotation.LocalOperationStart(name),
